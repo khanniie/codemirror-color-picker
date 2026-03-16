@@ -1,10 +1,8 @@
 {
-  "name": "@uiw/codemirror-extensions-color",
-  "version": "4.25.8",
-  "description": "Color Extensions for CodeMirror6.",
-  "homepage": "https://uiwjs.github.io/react-codemirror/#/extensions/color",
-  "funding": "https://jaywcjlove.github.io/#/sponsor",
-  "author": "kenny wong <wowohoo@qq.com>",
+  "name": "@khanniie/codemirror-color-picker",
+  "version": "1.0.0",
+  "description": "Color Picker Extension for CodeMirror6.",
+  "author": "modified by Connie Ye, original author kenny wong <wowohoo@qq.com>",
   "license": "MIT",
   "main": "./cjs/index.js",
   "module": "./esm/index.js",
@@ -18,11 +16,12 @@
   "scripts": {
     "watch": "tsbb watch src/*.ts --use-babel",
     "build": "tsbb build src/*.ts --use-babel && npm run setmodule",
-    "setmodule": "echo '{\"type\":\"module\"}' > esm/package.json && echo '{\"type\":\"commonjs\"}' > cjs/package.json"
+    "setmodule": "echo '{\"type\":\"module\"}' > esm/package.json && echo '{\"type\":\"commonjs\"}' > cjs/package.json",
+    "start": "parcel example/index.html"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/uiwjs/react-codemirror.git"
+    "url": "https://github.com/khanniie/codemirror-color-picker.git"
   },
   "files": [
     "src",
@@ -35,9 +34,14 @@
     "@codemirror/view": ">=6.0.0"
   },
   "devDependencies": {
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/language": "^6.0.0",
     "@codemirror/state": "^6.0.0",
-    "@codemirror/view": "^6.0.0"
+    "@codemirror/view": "^6.0.0",
+    "codemirror": "^6.0.2",
+    "parcel": "^2.9.1",
+    "tsbb": "4.5.5"
   },
   "dependencies": {
     "colors-named": "^1.0.0",
@@ -49,14 +53,9 @@
     "codemirror6",
     "color",
     "color-picker",
-    "extensions",
-    "ide",
-    "code"
+    "extensions"
   ],
-  "jest": {
-    "coverageReporters": [
-      "lcov",
-      "json-summary"
-    ]
+  "@parcel/resolver-default": {
+    "packageExports": true
   }
 }
