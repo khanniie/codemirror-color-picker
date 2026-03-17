@@ -159,10 +159,9 @@ function colorDecorations(view: EditorView) {
 }
 
 class ColorWidget extends WidgetType {
-  private state: ColorState;
+  private readonly state: ColorState;
   private readonly color: string;
   private readonly colorRaw: string;
-  private picker?: HTMLInputElement;
 
   constructor({
     color,
@@ -203,7 +202,6 @@ class ColorWidget extends WidgetType {
   }
   toDOM() {
     const picker = document.createElement('input');
-    this.picker = picker; // Save the reference for later so updateDOM can update the state.
     colorState.set(picker, this.state);
     picker.type = 'color';
     picker.value = this.color;
@@ -261,7 +259,6 @@ export const colorView = (showPicker: boolean = true) =>
           )
             return false;
           const data = colorState.get(target)!;
-          console.log('input event on color picker with data:', data);
           const value = target.value;
           const rgb = hexToRgb(value);
           const colorraw = target.dataset.colorraw;
@@ -291,7 +288,6 @@ export const colorView = (showPicker: boolean = true) =>
           converted = data.stringFormatCharacter
             ? `${data.stringFormatCharacter}${converted}${data.stringFormatCharacter}`
             : converted;
-          console.log('dispatching', { from: data.from, to: data.to, insert: converted });
           view.dispatch({
             changes: {
               from: data.from,
