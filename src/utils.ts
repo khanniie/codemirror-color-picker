@@ -35,7 +35,7 @@ export function hexToRgb(hex: string) {
 
 /** https://css-tricks.com/converting-color-spaces-in-javascript/#aa-rgb-to-hsl */
 export function RGBToHSL(r: number, g: number, b: number) {
-  (r /= 255), (g /= 255), (b /= 255);
+  ((r /= 255), (g /= 255), (b /= 255));
   const max = Math.max(r, g, b),
     min = Math.min(r, g, b);
   let h = 0,
@@ -60,5 +60,19 @@ export function RGBToHSL(r: number, g: number, b: number) {
     }
     h /= 6;
   }
-  return { h: Math.floor(h * 360), s: Math.floor(s * 100), l: Math.floor(l * 100) };
+  return {
+    h: Math.floor(h * 360),
+    s: Math.floor(s * 100),
+    l: Math.floor(l * 100),
+  };
+}
+
+export function hasStringFormatting(rawColor: string): string | undefined {
+  if (rawColor.startsWith("'") && rawColor.endsWith("'")) {
+    return "'";
+  }
+  if (rawColor.startsWith('"') && rawColor.endsWith('"')) {
+    return '"';
+  }
+  return undefined;
 }

@@ -3,8 +3,8 @@ import { Extension, Range } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import colors from 'colors-named';
 import hexs from 'colors-named-hex';
-import hslMatcher, { hlsStringToRGB, RGBAColor } from 'hsl-matcher';
-import { toFullHex, rgbToHex, hexToRgb, RGBToHSL } from './utils';
+import { hlsStringToRGB, RGBAColor } from 'hsl-matcher';
+import { toFullHex, rgbToHex, hexToRgb, RGBToHSL, hasStringFormatting } from './utils';
 
 export enum ColorType {
   rgb = 'RGB',
@@ -18,11 +18,14 @@ export interface ColorState {
   to: number;
   alpha: string;
   colorType: ColorType;
+  stringFormatCharacter?: string;
 }
 
 const colorState = new WeakMap<HTMLInputElement, ColorState>();
 
 type GetArrayElementType<T extends readonly any[]> = T extends readonly (infer U)[] ? U : never;
+
+const MATCHING_TYPES = ['CallExpression', 'String', 'ColorLiteral'];
 
 function colorDecorations(view: EditorView) {
   const widgets: Array<Range<Decoration>> = [];
@@ -31,7 +34,9 @@ function colorDecorations(view: EditorView) {
       from: range.from,
       to: range.to,
       enter: ({ type, from, to }) => {
-        const callExp: string = view.state.doc.sliceString(from, to);
+        const rawCallExp: string = view.state.doc.sliceString(from, to);
+        const stringFormatCharacter = hasStringFormatting(rawCallExp);
+        const callExp = stringFormatCharacter ? rawCallExp.substring(1, rawCallExp.length - 1) : rawCallExp;
         /**
          * ```
          * rgb(0 107   128, .5);         ❌ ❌ ❌
@@ -50,10 +55,11 @@ function colorDecorations(view: EditorView) {
          * rgba( 255 255 255 /  );       ❌ ❌ ❌
          * ```
          */
-        if (type.name === 'CallExpression' && callExp.startsWith('rgb')) {
+
+        if (MATCHING_TYPES.includes(type.name) && callExp.toLowerCase().startsWith('rgb')) {
           const match =
-            /rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,?\s*(\d{1,3})\s*(,\s*\d*\.\d*\s*)?\)/i.exec(callExp) ||
-            /rgba?\(\s*(\d{1,3})\s*(\d{1,3})\s*(\d{1,3})\s*(\/?\s*\d+%)?(\/\s*\d+\.\d\s*)?\)/i.exec(callExp);
+            /rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,?\s*(\d{1,3})\s*(,\s*\d*\.?\d*\s*)?\)/i.exec(callExp) ||
+            /rgba?\(\s*(\d{1,3})\s*(\d{1,3})\s*(\d{1,3})\s*(\/?\s*\d+%)?(\/\s*\d+\.?\d*\s*)?\)/i.exec(callExp);
           if (!match) return;
           const [_, r, g, b, a] = match;
           const hex = rgbToHex(Number(r), Number(g), Number(b));
@@ -65,11 +71,12 @@ function colorDecorations(view: EditorView) {
               from,
               to,
               alpha: a ? a.replace(/(\/|,)/g, '') : '',
+              stringFormatCharacter,
             }),
             side: 0,
           });
           widgets.push(widget.range(from));
-        } else if (type.name === 'CallExpression' && hslMatcher(callExp)) {
+        } else if (MATCHING_TYPES.includes(type.name) && callExp.toLowerCase().startsWith('hsl')) {
           /**
            * # valid
            * hsl(240, 100%, 50%)                           // ✅ comma separated
@@ -107,11 +114,12 @@ function colorDecorations(view: EditorView) {
               from,
               to,
               alpha: match.a ? match.a.toString() : '',
+              stringFormatCharacter,
             }),
             side: 0,
           });
           widgets.push(widget.range(from));
-        } else if (type.name === 'ColorLiteral') {
+        } else if (MATCHING_TYPES.includes(type.name) && callExp.startsWith('#')) {
           const [color, alpha] = toFullHex(callExp);
           const widget = Decoration.widget({
             widget: new ColorWidget({
@@ -121,6 +129,7 @@ function colorDecorations(view: EditorView) {
               from,
               to,
               alpha,
+              stringFormatCharacter,
             }),
             side: 0,
           });
@@ -136,6 +145,7 @@ function colorDecorations(view: EditorView) {
                 from,
                 to,
                 alpha: '',
+                stringFormatCharacter,
               }),
               side: 0,
             });
@@ -152,6 +162,7 @@ class ColorWidget extends WidgetType {
   private readonly state: ColorState;
   private readonly color: string;
   private readonly colorRaw: string;
+  private wrapper?: HTMLElement;
 
   constructor({
     color,
@@ -174,6 +185,12 @@ class ColorWidget extends WidgetType {
       other.state.to === this.state.to &&
       other.state.alpha === this.state.alpha
     );
+  }
+  updateDOM(dom: HTMLElement, view: EditorView, from: ColorWidget): boolean {
+    if (this.state.from !== from.state.from || this.state.alpha !== from.state.alpha) return false;
+
+    dom.style.backgroundColor = this.colorRaw;
+    return true;
   }
   toDOM() {
     const picker = document.createElement('input');
@@ -224,7 +241,7 @@ export const colorView = (showPicker: boolean = true) =>
     {
       decorations: (v) => v.decorations,
       eventHandlers: {
-        change: (e, view) => {
+        input: (e, view) => {
           const target = e.target as HTMLInputElement;
           if (
             target.nodeName !== 'INPUT' ||
@@ -256,9 +273,12 @@ export const colorView = (showPicker: boolean = true) =>
             const rgb = hexToRgb(value);
             if (rgb) {
               const { h, s, l } = RGBToHSL(rgb?.r, rgb?.g, rgb?.b);
-              converted = `hsl(${h}deg ${s}% ${l}%${data.alpha ? ' / ' + data.alpha : ''})`;
+              converted = `hsl(${h}, ${s}%, ${l}%${data.alpha ? `, ${data.alpha}` : ''})`;
             }
           }
+          converted = data.stringFormatCharacter
+            ? `${data.stringFormatCharacter}${converted}${data.stringFormatCharacter}`
+            : converted;
           view.dispatch({
             changes: {
               from: data.from,
@@ -266,6 +286,7 @@ export const colorView = (showPicker: boolean = true) =>
               insert: converted,
             },
           });
+          data.to = data.from + converted.length;
           return true;
         },
       },
