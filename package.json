@@ -1,6 +1,6 @@
 {
   "name": "@connieye/codemirror-color-picker",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Color Picker Extension for CodeMirror6.",
   "author": "Connie Ye",
   "license": "MIT",
