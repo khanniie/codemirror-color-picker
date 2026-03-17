@@ -159,10 +159,10 @@ function colorDecorations(view: EditorView) {
 }
 
 class ColorWidget extends WidgetType {
-  private readonly state: ColorState;
+  private state: ColorState;
   private readonly color: string;
   private readonly colorRaw: string;
-  private wrapper?: HTMLElement;
+  private picker?: HTMLInputElement;
 
   constructor({
     color,
@@ -187,13 +187,23 @@ class ColorWidget extends WidgetType {
     );
   }
   updateDOM(dom: HTMLElement, view: EditorView, from: ColorWidget): boolean {
-    if (this.state.from !== from.state.from || this.state.alpha !== from.state.alpha) return false;
-
+    const picker = dom.querySelector('input[type=color]');
+    if (
+      !(picker instanceof HTMLInputElement) ||
+      this.state.from !== from.state.from ||
+      this.state.alpha !== from.state.alpha
+    ) {
+      return false;
+    }
     dom.style.backgroundColor = this.colorRaw;
+
+    // Update the state to reflect the new position.
+    colorState.set(picker, this.state);
     return true;
   }
   toDOM() {
     const picker = document.createElement('input');
+    this.picker = picker; // Save the reference for later so updateDOM can update the state.
     colorState.set(picker, this.state);
     picker.type = 'color';
     picker.value = this.color;
@@ -203,6 +213,7 @@ class ColorWidget extends WidgetType {
     wrapper.appendChild(picker);
     wrapper.dataset['color'] = this.color;
     wrapper.style.backgroundColor = this.colorRaw;
+
     return wrapper;
   }
   ignoreEvent() {
@@ -250,6 +261,7 @@ export const colorView = (showPicker: boolean = true) =>
           )
             return false;
           const data = colorState.get(target)!;
+          console.log('input event on color picker with data:', data);
           const value = target.value;
           const rgb = hexToRgb(value);
           const colorraw = target.dataset.colorraw;
@@ -279,6 +291,7 @@ export const colorView = (showPicker: boolean = true) =>
           converted = data.stringFormatCharacter
             ? `${data.stringFormatCharacter}${converted}${data.stringFormatCharacter}`
             : converted;
+          console.log('dispatching', { from: data.from, to: data.to, insert: converted });
           view.dispatch({
             changes: {
               from: data.from,

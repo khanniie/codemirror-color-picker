@@ -1,6 +1,6 @@
 {
   "name": "@connieye/codemirror-color-picker",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Color Picker Extension for CodeMirror6.",
   "author": "Connie Ye",
   "license": "MIT",
@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/khanniie/codemirror-color-picker.git"
+    "url": "git+https://github.com/khanniie/codemirror-color-picker.git"
   },
   "files": [
     "src",
@@ -31,14 +31,14 @@
   "peerDependencies": {
     "@codemirror/language": ">=6.0.0",
     "@codemirror/state": ">=6.0.0",
-    "@codemirror/view": ">=6.0.0"
+    "@codemirror/view": ">=6.40.0"
   },
   "devDependencies": {
     "@codemirror/lang-css": "^6.3.1",
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/language": "^6.0.0",
     "@codemirror/state": "^6.0.0",
-    "@codemirror/view": "^6.0.0",
+    "@codemirror/view": "^6.40.0",
     "codemirror": "^6.0.2",
     "parcel": "^2.9.1",
     "tsbb": "4.5.5"
