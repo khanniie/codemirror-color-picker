@@ -1,8 +1,8 @@
 {
-  "name": "@khanniie/codemirror-color-picker",
+  "name": "@connieye/codemirror-color-picker",
   "version": "1.0.0",
   "description": "Color Picker Extension for CodeMirror6.",
-  "author": "modified by Connie Ye, original author kenny wong <wowohoo@qq.com>",
+  "author": "Connie Ye",
   "license": "MIT",
   "main": "./cjs/index.js",
   "module": "./esm/index.js",
